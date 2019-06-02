@@ -1,7 +1,7 @@
 import ast
 import inspect
 import tokenize
-from contextlib import suppress
+from contextlib import contextmanager, suppress
 from difflib import SequenceMatcher
 from enum import IntEnum
 from functools import wraps
@@ -61,8 +61,10 @@ class Result:
 
             if dump1 == dump2:
                 continue
-            
-            for original, copy in zip(self.pkgs[0].pkgs.keys(), self.pkgs[1].pkgs.keys()):
+
+            for original, copy in zip(
+                self.pkgs[0].pkgs.keys(), self.pkgs[1].pkgs.keys()
+            ):
                 dump2 = dump2.replace(copy, original)
 
             _internal_rate -= 1 - SequenceMatcher(None, dump1, dump2).ratio()
