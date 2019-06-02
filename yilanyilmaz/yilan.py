@@ -30,10 +30,11 @@ def rate(meth):
 
 
 class Result:
-    def __init__(self, code_generator, missing_files):
+    def __init__(self, code_generator, missing_files, *pkgs):
         self.rate = 100
         self.code_generator = code_generator
         self.missing_files = missing_files
+        self.pkgs = pkgs
 
         for _, member in inspect.getmembers(self):
             if hasattr(member, "rate_mark"):
@@ -60,6 +61,9 @@ class Result:
 
             if dump1 == dump2:
                 continue
+            
+            for original, copy in zip(self.pkgs[0].pkgs.keys(), self.pkgs[1].pkgs.keys()):
+                dump2 = dump2.replace(copy, original)
 
             _internal_rate -= 1 - SequenceMatcher(None, dump1, dump2).ratio()
         return _internal_rate
@@ -80,7 +84,7 @@ class YilanYilmaz:
         pkg2._codes = chain.from_iterable(pkg2.pkgs.values())
 
         zipped_modules, missings = self.module_zip_together(pkg1._codes, pkg2._codes)
-        return Result(zipped_modules, missings)
+        return Result(zipped_modules, missings, pkg1, pkg2)
 
     def module_zip_together(self, modules1, modules2):
         modules1_bases = {}
