@@ -1,6 +1,21 @@
+import ast
+import tokenize
+from contextlib import suppress
+
 from yilanyilmaz.matcher import match
 from yilanyilmaz.obtain import Sources
 
+class Code:
+    """ Python AST representation of multiple modules """
+    
+    def __init__(self, *files):
+        self.handled_files = {}
+        for file in files:
+            with suppress(Exception):
+                with tokenize.open(file) as f:
+                    ast_repr = ast.parse(f.read())
+                
+                self.handled_files[file] = ast_repr
 
 class YilanYilmaz:
     def compare(self, pkg1, pkg2):
@@ -12,7 +27,6 @@ class YilanYilmaz:
 
         pkg1 = match(pkg1_type, pkg1)
         pkg2 = match(pkg2_type, pkg2)
-
 
 if __name__ == "__main__":
     yy = YilanYilmaz()
