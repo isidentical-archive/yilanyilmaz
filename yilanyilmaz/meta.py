@@ -1,42 +1,11 @@
-import os
-from enum import Enum
-from typing import Sequence, Tuple
-
-from yilanyilmaz.obtain import Sources
+import pkgutil
+from pathlib import Path
 
 
-class Stage(Enum):
-    ALPHA = "a"
-    BETA = "b"
-    FINAL = None
+def packages(directory):
+    packages = {}
+    for module in pkgutil.iter_modules([directory.name]):
+        if module.ispkg:
+            packages[module.name] = (Path(directory.name) / module.name).glob("**/*.py")
 
-
-@dataclass
-class Version:
-    major: int
-    minor: int
-    bugfx: int
-    stage: Stage = Stage.FINAL
-    stver: int = None
-
-
-@dataclass
-class Metadata:
-    name: str
-    version: Version
-    packages: Sequence[os.PathLike]
-
-    @classmethod
-    def from_source(cls, source):
-        if source.type is Sources.GIT:
-            cls._git(source.dir)
-        elif source.type is Sources.PYPI:
-            cls._pypi(source.dir)
-
-    @classmethod
-    def _git(cls, directory):
-        pass
-
-    @classmethod
-    def _pypi(cls, directory):
-        pass
+    return packages
