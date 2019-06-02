@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 
@@ -9,6 +10,12 @@ from pathlib import Path
 class Sources(Enum):
     GIT = auto()
     PYPI = auto()
+
+
+@dataclass
+class Source:
+    dir: tempfile.TemporaryDirectory
+    type: Sources
 
 
 def copytree(src, dst, symlinks=False, ignore=None):
@@ -32,15 +39,16 @@ def _obtain_from_git(tempdir, repo):
 def _obtain_from_pypi(tempdir, repo):
     process = subprocess.run(["pip", "install", "--target", tempdir.name, repo])
     process.check_returncode()
-    copytree(f"{tempdir.name}/{repo}/", tempdir.name)
     return tempdir
 
 
 def obtain(source: Sources, repo: str) -> tempfile.TemporaryDirectory:
     tempdir = tempfile.TemporaryDirectory()
     if source is Sources.GIT:
-        return _obtain_from_git(tempdir, repo)
+        _obtain_from_git(tempdir, repo)
     elif source is Sources.PYPI:
-        return _obtain_from_pypi(tempdir, repo)
+        _obtain_from_pypi(tempdir, repo)
     else:
         return NotImplemented
+
+    return Source(tempdir, source)
