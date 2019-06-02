@@ -8,6 +8,7 @@ from functools import wraps
 from itertools import chain
 from pprint import pprint
 
+from yilanyilmaz.handlers import PatternVisitor
 from yilanyilmaz.matcher import match
 from yilanyilmaz.obtain import Sources
 
@@ -62,12 +63,18 @@ class Result:
             if dump1 == dump2:
                 continue
 
-            for original, copy in zip(
-                self.pkgs[0].pkgs.keys(), self.pkgs[1].pkgs.keys()
-            ):
+            coper = zip(self.pkgs[0].pkgs.keys(), self.pkgs[1].pkgs.keys())
+            for original, copy in coper:
                 dump2 = dump2.replace(copy, original)
 
             _internal_rate -= 1 - SequenceMatcher(None, dump1, dump2).ratio()
+
+            pp = PatternVisitor()
+            patterns1 = pp.dispatch(tree1)
+            patterns2 = pp.dispatch(tree2)
+            ratio = pp.compare(patterns1, patterns2)
+            _internal_rate += ratio
+
         return _internal_rate
 
 
@@ -118,7 +125,3 @@ class YilanYilmaz:
             ],
             undefined_files,
         )
-
-
-if __name__ == "__main__":
-    print(yy.compare(p1, p2).rate)

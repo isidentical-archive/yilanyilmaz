@@ -9,7 +9,7 @@ import astpretty
 
 @contextmanager
 def restart(obj, attr):
-    original = getattr(obj, attr)
+    original = defaultdict(int)
     try:
         setattr(obj, attr, original)
         yield
@@ -21,21 +21,16 @@ class PatternVisitor(ast.NodeVisitor):
     patterns = {}
 
     def __init_subclass__(cls):
-        cls.__bases__[0].patterns[cls.__doc__] = cls()
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._seen_patterns = defaultdict(int)
-
-    def visit(self, tree):
-        with restart(self, "_seen_patterns"):
-            super().visit(tree)
-            return self._seen_patterns
+        cls.__bases__[0].patterns[cls.__doc__] = cls
 
     def dispatch(self, tree):
-        for _, pattern in self.patterns.items():
-            seen_patterns = pattern.visit(tree)
-            print(seen_patterns)
+        patterns = []
+        for pattern_manager in self.patterns.values():
+            pattern_manager = pattern_manager()
+            pattern_manager._seen_patterns = defaultdict(int)
+            pattern_manager.visit(tree)
+            patterns.append(pattern_manager._seen_patterns)
+        return patterns
 
     def check_name(self, node, name):
         if "." in name:
@@ -65,6 +60,9 @@ class PatternVisitor(ast.NodeVisitor):
                 args = map(str, self.obtain_args(arg.args))
                 yield f"{func}({', '.join(args)})"
 
+    def compare(self, patterns1, patterns2):
+        return 0
+
 
 class NamedTupleUsage(PatternVisitor):
     """Check Named Tuple similarity"""
@@ -84,6 +82,7 @@ class NamedTupleUsage(PatternVisitor):
         name, *fields = tuple(self.obtain_args(node.args))
         pattern = self.NamedTuple(name, tuple(fields))
         self._seen_patterns[pattern] += 1
+        return self.generic_visit(node)
 
 
 if __name__ == "__main__":
