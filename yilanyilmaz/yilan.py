@@ -2,6 +2,7 @@ import ast
 import inspect
 import tokenize
 from contextlib import suppress
+from difflib import SequenceMatcher
 from enum import IntEnum
 from functools import wraps
 from itertools import chain
@@ -54,8 +55,14 @@ class Result:
             with tokenize.open(file2) as f:
                 tree2 = ast.parse(f.read())
 
-            print(tree1)
-            print(tree2)
+            dump1 = ast.dump(tree1)
+            dump2 = ast.dump(tree2)
+
+            if dump1 == dump2:
+                continue
+
+            _internal_rate -= 1 - SequenceMatcher(None, dump1, dump2).ratio()
+        return _internal_rate
 
 
 class YilanYilmaz:
@@ -108,7 +115,4 @@ class YilanYilmaz:
 
 
 if __name__ == "__main__":
-    yy = YilanYilmaz()
-    p1 = ("arkhe", "pypi")
-    p2 = ("https://github.com/isidentical/Arkhe.git", "git")
     print(yy.compare(p1, p2).rate)
